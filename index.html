@@ -21,8 +21,8 @@
     overscroll-behavior:none;
   }
   header{margin-bottom:14px;}
-  header h1{font-size:1.4rem;font-weight:800;color:#111;letter-spacing:-.3px;}
-  header p{font-size:.9rem;color:#111;font-weight:500;margin-top:4px;line-height:1.5;max-width:700px;}
+  header h1{font-size:1.9rem;font-weight:800;color:#111;letter-spacing:-.3px;}
+  header p{font-size:1.05rem;color:#111;font-weight:500;margin-top:6px;line-height:1.6;max-width:700px;}
 
   .layout{display:grid;grid-template-columns:1fr 300px;gap:14px;align-items:start;}
   .left-panel{display:flex;flex-direction:column;gap:10px;}
@@ -111,7 +111,7 @@
   .right-panel{
     background:var(--surface);border-radius:var(--radius);
     box-shadow:var(--shadow);border:1px solid var(--border);
-    padding:12px;display:flex;flex-direction:column;gap:10px;
+    padding:12px;display:flex;flex-direction:column;gap:6px;
     max-height:85vh;overflow-y:auto;
   }
   .right-panel::-webkit-scrollbar{width:3px;}
@@ -132,9 +132,9 @@
   .sticker-panel{display:none;} .sticker-panel.active{display:block;}
   .sub-label{
     font-size:.66rem;font-weight:700;color:var(--muted);
-    text-transform:uppercase;letter-spacing:.7px;margin:9px 0 5px;
+    text-transform:uppercase;letter-spacing:.7px;margin:6px 0 4px;
   }
-  .sub-label:first-child{margin-top:0;}
+  .sub-label:first-child{margin-top:2px;}
 
   .emoji-row{display:grid;grid-template-columns:repeat(6,1fr);gap:3px;margin-bottom:2px;}
   .s-item{
@@ -222,6 +222,33 @@
     font-size:1rem;
   }
 
+  /* ── MEME GRID ── */
+  .meme-grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:6px;
+  }
+  .meme-item{
+    border-radius:8px;overflow:hidden;cursor:pointer;
+    border:1.5px solid var(--border);
+    background:var(--sf2);
+    display:flex;flex-direction:column;align-items:center;
+    transition:transform .12s,border-color .12s;
+    touch-action:manipulation;
+  }
+  .meme-item:active{transform:scale(.97);}
+  .meme-item:hover{border-color:#999;}
+  .meme-item img{width:100%;aspect-ratio:1;object-fit:cover;display:block;pointer-events:none;}
+
+  .overlay-item.gif-overlay{
+    cursor:move;
+    line-height:0;
+  }
+  .overlay-item.gif-overlay img{
+    border-radius:6px;
+    display:block;
+  }
+
   .toast{
     position:fixed;bottom:24px;left:50%;
     transform:translateX(-50%) translateY(60px);
@@ -244,8 +271,7 @@
 
 <header>
   <h1>Expression Palette</h1>
-  <p>Based on what you learned about your emotions and the skills to manage them, now try updating your initial image to show how you are feeling now.
-</p>
+  <p>Based on what you learned about your emotions and the skills to manage them, now try updating your initial image to show how you are feeling now.</p>
 </header>
 
 <div class="layout">
@@ -284,12 +310,19 @@
       <span class="t-icon">T</span><span>Add Text block</span>
     </button>
 
-    <div>
-      <div class="sec-label">Stickers</div>
-      <div class="cat-tabs">
-        <button class="cat-tab active" onclick="showCat('emotions',this)">😊 Emotions</button>
-        <button class="cat-tab"        onclick="showCat('symbols',this)">❤️ Symbols</button>
-        <button class="cat-tab"        onclick="showCat('misc',this)">🦄 More</button>
+    <div class="cat-tabs">
+      <button class="cat-tab active" onclick="showCat('emotions',this)">😊 Emotions</button>
+      <button class="cat-tab"        onclick="showCat('symbols',this)">❤️ Symbols</button>
+      <button class="cat-tab"        onclick="showCat('memes',this)">😂 Memes</button>
+    </div>
+
+    <div id="searchSection">
+      <div class="search-wrap">
+        <div class="search-bar">
+          <span style="color:#bbb">🔍</span>
+          <input type="text" id="searchInput" placeholder="e.g. love, fire, sad...">
+        </div>
+        <div class="search-results" id="searchResults"></div>
       </div>
     </div>
 
@@ -307,25 +340,13 @@
       <div class="sub-label">Nature &amp; Elements</div><div class="emoji-row" id="row-nature"></div>
       <div class="sub-label">Power &amp; Energy</div><div class="emoji-row" id="row-power"></div>
       <div class="sub-label">Dark &amp; Edgy</div><div class="emoji-row" id="row-dark"></div>
-    </div>
-    <div class="sticker-panel" id="cat-misc">
       <div class="sub-label">Activities &amp; Sports</div><div class="emoji-row" id="row-activity"></div>
       <div class="sub-label">Food &amp; Drink</div><div class="emoji-row" id="row-food"></div>
       <div class="sub-label">Objects &amp; Things</div><div class="emoji-row" id="row-objects"></div>
       <div class="sub-label">Animals</div><div class="emoji-row" id="row-animals"></div>
     </div>
-
-    <div>
-      <div class="sec-label" style="margin-bottom:7px">Search Emoji</div>
-      <div class="search-wrap">
-        <div class="search-bar">
-          <span style="color:#bbb">🔍</span>
-          <input type="text" id="searchInput" placeholder="e.g. love, fire, sad...">
-        </div>
-        <div class="search-results" id="searchResults">
-          <div class="search-hint">Type to search emoji</div>
-        </div>
-      </div>
+    <div class="sticker-panel" id="cat-memes">
+      <div class="meme-grid" id="memeGrid"></div>
     </div>
   </div>
 </div>
@@ -416,7 +437,52 @@ var CLUSTERS={
   strong:['💪','✊','👊','🏆','👑','🔥','⚡','🚀','🛡️','🎯']
 };
 
-// Build sticker grids — use data-emoji attribute instead of inline onclick with emoji
+// ═══════════ MEMES ═══════════
+// Using i.giphy.com URLs which allow direct hotlinking
+var MEMES = [
+  { url:'https://i.giphy.com/media/hUKiOsbuxdXa0/giphy.webp',       label:'This is fine' },
+  { url:'https://i.giphy.com/media/11sBLVxNs7v6WA/giphy.webp',      label:'Ugh' },
+  { url:'https://i.giphy.com/media/11tTNkNy1SdXGg/giphy.webp',      label:'Angry' },
+  { url:'https://i.giphy.com/media/CWeaJzFCcHrDF1Iaju/giphy.webp',  label:'Nope' },
+  { url:'https://i.giphy.com/media/xDoNbo6EFD3JS/giphy.webp',       label:'Cry' },
+  { url:'https://i.giphy.com/media/7SF5scGB2AFrgsXP63/giphy.webp',  label:'Wow' },
+  { url:'https://i.giphy.com/media/Ev477g37MJORyOWfdG/giphy.webp',  label:'Shocked' },
+  { url:'https://i.giphy.com/media/6Umkh0GwRYhfG/giphy.webp',       label:'Really?' }
+];
+
+function buildMemes(){
+  var grid = document.getElementById('memeGrid');
+  MEMES.forEach(function(m, i){
+    var div = document.createElement('div');
+    div.className = 'meme-item';
+    div.dataset.mi = i;
+
+    var img = document.createElement('img');
+    img.src = m.url;
+    img.alt = m.label;
+    img.loading = 'lazy';
+    img.onerror = function(){
+      if(this.src.indexOf('.webp') > -1){
+        this.src = this.src.replace('.webp', '.gif');
+      } else {
+        div.style.fontSize = '.65rem';
+        div.style.fontWeight = '700';
+        div.style.color = '#888';
+        div.style.padding = '4px';
+        div.style.textAlign = 'center';
+        div.textContent = m.label;
+      }
+    };
+
+    div.appendChild(img);
+
+    div.addEventListener('click', function(){ addOverlay('gif', m.url); });
+    div.addEventListener('touchend', function(e){ e.preventDefault(); addOverlay('gif', m.url); }, {passive:false});
+    grid.appendChild(div);
+  });
+}
+
+// Build sticker grids
 function buildRows(){
   Object.keys(EMOJI_DB).forEach(function(rowId){
     var el=document.getElementById(rowId); if(!el) return;
@@ -454,6 +520,9 @@ function showCat(cat,btn){
   document.querySelectorAll('.cat-tab').forEach(function(b){b.classList.remove('active');});
   document.getElementById('cat-'+cat).classList.add('active');
   btn.classList.add('active');
+  // Hide search box when Memes tab is selected
+  var ss=document.getElementById('searchSection');
+  if(ss) ss.style.display = (cat==='memes') ? 'none' : '';
 }
 
 // Search
@@ -466,7 +535,7 @@ var ALL_FLAT=(function(){
 document.getElementById('searchInput').addEventListener('input',function(){
   var q=this.value.trim().toLowerCase();
   var res=document.getElementById('searchResults');
-  if(!q){res.innerHTML='<div class="search-hint">Type to search emoji</div>';return;}
+  if(!q){res.innerHTML='';return;}
   var scored=ALL_FLAT.map(function(em){
     var lbl=(EMOJI_LABELS[em]||'').toLowerCase();
     var score=0;
@@ -747,10 +816,14 @@ topCanvas.addEventListener('touchcancel',function(){
 // ── Resize / Rotate via passthrough ──
 function startResize(item,startE){
   var c0=clientXY(startE);
-  var ss=parseFloat(window.getComputedStyle(item).fontSize)||42;
+  var isGif=item.classList.contains('gif-overlay');
+  var img=isGif?item.querySelector('img'):null;
+  var ss=isGif?(parseFloat(img&&img.style.width)||120):(parseFloat(window.getComputedStyle(item).fontSize)||42);
   function mv(e){
     var c=clientXY(e);
-    item.style.fontSize=Math.max(14,ss+((c.x-c0.x)+(c.y-c0.y))/2)+'px';
+    var ns=Math.max(isGif?40:14, ss+((c.x-c0.x)+(c.y-c0.y))/2);
+    if(isGif&&img){ img.style.width=ns+'px'; img.style.height=ns+'px'; }
+    else{ item.style.fontSize=ns+'px'; }
   }
   function up(){ document.removeEventListener('mousemove',mv); document.removeEventListener('touchmove',mv);
     document.removeEventListener('mouseup',up); document.removeEventListener('touchend',up); }
@@ -795,6 +868,16 @@ function addOverlay(type,content){
     el.dataset.text=content;
     el.textContent=content;
     el.style.fontSize='18px';
+  } else if(type==='gif'){
+    // GIF image overlay
+    el.className+=' gif-overlay';
+    el.dataset.gifUrl=content;
+    var img=document.createElement('img');
+    img.src=content; img.draggable=false;
+    img.style.cssText='width:120px;height:120px;object-fit:cover;border-radius:6px;pointer-events:none;display:block;';
+    el.appendChild(img);
+    el.style.fontSize='0'; // no font size needed
+    el.style.lineHeight='1';
   } else {
     el.textContent=content; el.style.fontSize='42px';
   }
@@ -812,8 +895,17 @@ function addOverlay(type,content){
 
   el.addEventListener('wheel',function(e){
     e.preventDefault();
-    var cur=parseFloat(window.getComputedStyle(el).fontSize)||42;
-    el.style.fontSize=Math.max(14,cur+(e.deltaY>0?-3:3))+'px';
+    if(el.classList.contains('gif-overlay')){
+      var img=el.querySelector('img');
+      if(img){
+        var cur=parseFloat(img.style.width)||120;
+        var ns=Math.max(40,cur+(e.deltaY>0?-8:8));
+        img.style.width=ns+'px'; img.style.height=ns+'px';
+      }
+    } else {
+      var cur=parseFloat(window.getComputedStyle(el).fontSize)||42;
+      el.style.fontSize=Math.max(14,cur+(e.deltaY>0?-3:3))+'px';
+    }
     if(editingItem===el) positionTextInput(el);
   },{passive:false});
 
@@ -875,6 +967,19 @@ function handleDone(){
     var ir=item.getBoundingClientRect();
     var cx=(ir.left+ir.width/2-cr.left)*sx, cy=(ir.top+ir.height/2-cr.top)*sy;
     var rot=(parseFloat(item.dataset.rot)||0)*Math.PI/180;
+
+    if(item.classList.contains('gif-overlay')){
+      var img=item.querySelector('img');
+      if(img){
+        var iw=parseFloat(img.style.width)||120;
+        var ih=parseFloat(img.style.height)||120;
+        oc.save(); oc.translate(cx,cy); oc.rotate(rot);
+        try{ oc.drawImage(img, -iw*sx/2, -ih*sy/2, iw*sx, ih*sy); }catch(e){}
+        oc.restore();
+      }
+      return;
+    }
+
     var fs=parseFloat(window.getComputedStyle(item).fontSize)||42;
     var txt=item.textContent.replace('×','').replace('⤡','').replace('↻','').trim();
     oc.save(); oc.translate(cx,cy); oc.rotate(rot);
@@ -893,6 +998,7 @@ function showToast(msg){
 
 // ── Init ──
 buildRows();
+buildMemes();
 
 // White background
 mctx.fillStyle='#ffffff';
