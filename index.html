@@ -304,12 +304,12 @@
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
   @media(max-width:700px){
-    body{ padding:0; }
-    /* Single column, stacked: header → canvas → draw controls → right panel */
+    body{ padding:0; overflow-x:hidden; }
     .layout{
       display:flex;
       flex-direction:column;
       gap:10px;
+      width:100%;
     }
     .canvas-header{
       order:1;
@@ -318,13 +318,18 @@
     }
     .canvas-col{
       order:2;
+      width:100vw;
+      max-width:100vw;
     }
     .canvas-col .canvas-wrapper{
-      max-width:100%;
+      max-width:100vw !important;
+      width:100%;
+      margin:0;
       border-radius:0;
       border-left:none;
       border-right:none;
       padding:8px 0 0;
+      box-sizing:border-box;
     }
     .canvas-top-bar{
       padding:0 10px 8px;
@@ -333,6 +338,12 @@
       border-radius:0;
       border-left:none;
       border-right:none;
+      width:100%;
+    }
+    #mainCanvas, #topCanvas{
+      width:100% !important;
+      height:auto !important;
+      display:block;
     }
     .draw-controls{
       order:3;
@@ -351,10 +362,7 @@
       grid-template-columns:repeat(7,1fr);
       width:100%;
     }
-    .ctrl-divider{
-      width:100%;
-      height:1px;
-    }
+    .ctrl-divider{ width:100%; height:1px; }
     .ctrl-row{
       flex-direction:row;
       flex-wrap:wrap;
@@ -1153,11 +1161,18 @@ function syncOverlay(){
 // Actually with grid-area:1/1 all items overlap — overlayContainer needs explicit size
 function fixOverlaySize(){
   var oc=document.getElementById('overlayContainer');
-  oc.style.width=mainCanvas.offsetWidth+'px';
-  oc.style.height=mainCanvas.offsetHeight+'px';
+  var w=mainCanvas.offsetWidth;
+  var h=mainCanvas.offsetHeight;
+  if(w>0&&h>0){
+    oc.style.width=w+'px';
+    oc.style.height=h+'px';
+  }
 }
 window.addEventListener('resize', fixOverlaySize);
+// Run multiple times to catch late mobile renders
 setTimeout(fixOverlaySize, 100);
+setTimeout(fixOverlaySize, 500);
+setTimeout(fixOverlaySize, 1000);
 </script>
 </body>
 </html>
