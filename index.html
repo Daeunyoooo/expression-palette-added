@@ -11,6 +11,10 @@
     --text:#111; --muted:#888; --border:#e8e8e8;
     --shadow:0 4px 24px rgba(0,0,0,.10),0 1px 4px rgba(0,0,0,.06);
     --radius:16px;
+    /* canvas-size = full viewport height minus header and body padding */
+    --header-h: 130px; /* h1 + description + margin */
+    --pad: 32px;       /* body padding top+bottom */
+    --canvas-size: calc(100vh - var(--header-h) - var(--pad));
   }
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
   body{
@@ -20,17 +24,107 @@
     /* prevent rubber-band scroll from interfering with canvas */
     overscroll-behavior:none;
   }
-  header{margin-bottom:14px;}
-  header h1{font-size:1.9rem;font-weight:800;color:#111;letter-spacing:-.3px;}
-  header p{font-size:1.05rem;color:#111;font-weight:500;margin-top:6px;line-height:1.6;max-width:700px;}
+  /* Layout: draw controls | canvas (center) | right panel */
+  .layout{
+    display:grid;
+    grid-template-columns: auto 1fr 280px;
+    grid-template-rows: auto auto;
+    gap:0 8px;
+    align-items:start;
+  }
+  /* Header spans only the canvas column (col 2), centered */
+  .canvas-header{
+    grid-column:2;
+    grid-row:1;
+    text-align:center;
+    margin-bottom:14px;
+  }
+  .canvas-header h1{font-size:1.9rem;font-weight:800;color:#111;letter-spacing:-.3px;}
+  .canvas-header p{font-size:1.05rem;color:#111;font-weight:500;margin-top:6px;line-height:1.6;}
 
-  .layout{display:grid;grid-template-columns:1fr 300px;gap:14px;align-items:start;}
-  .left-panel{display:flex;flex-direction:column;gap:10px;}
+  /* draw-controls starts at canvas row (row 2) */
+  .draw-controls{ grid-column:1; grid-row:2; align-self:start; }
+
+  /* canvas-col on col 2 row 2 */
+  .canvas-col{ grid-column:2; grid-row:2; min-width:0; }
+  .canvas-col .canvas-wrapper{
+    max-width: calc(100vh - 210px);
+    margin:0 auto;
+  }
+
+  /* right panel starts at canvas row (row 2) */
+  .right-panel{ grid-column:3; grid-row:2; }
+
+  /* Draw controls — flush to canvas (no gap), wider with labels */
+  .draw-controls{
+    background:var(--surface);border-radius:var(--radius);
+    box-shadow:var(--shadow);border:1px solid var(--border);
+    padding:12px 10px;
+    display:flex;flex-direction:column;gap:10px;
+    width:110px;
+    align-items:center;
+  }
+  /* 3-column color grid */
+  .colors{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:5px;
+    width:100%;
+  }
+  .color-swatch{
+    width:24px;height:24px;border-radius:50%;cursor:pointer;
+    border:3px solid transparent;flex-shrink:0;
+    transition:transform .1s,border-color .1s;
+    justify-self:center;
+  }
+  .color-swatch.active{border-color:#111;transform:scale(1.18);}
+
+  .ctrl-divider{
+    width:100%;height:1px;background:var(--border);flex-shrink:0;
+  }
+
+  .ctrl-row{
+    display:flex;flex-direction:column;gap:5px;
+    align-items:center;width:100%;
+  }
+  .ctrl-label{
+    font-size:.64rem;font-weight:700;color:var(--muted);
+    text-transform:uppercase;letter-spacing:.5px;
+    align-self:flex-start;
+  }
+  #sizeSlider{
+    -webkit-appearance:none;
+    width:88px;height:5px;border-radius:5px;
+    background:var(--border);outline:none;flex-shrink:0;
+  }
+  #sizeSlider::-webkit-slider-thumb{
+    -webkit-appearance:none;width:14px;height:14px;
+    border-radius:50%;background:#111;cursor:pointer;
+  }
+  /* pill buttons — icon + label stacked */
+  .pill{
+    padding:5px 4px 4px;border-radius:8px;border:1.5px solid var(--border);
+    background:transparent;font-family:inherit;
+    font-weight:700;cursor:pointer;color:var(--muted);
+    transition:all .1s;
+    width:44px;
+    display:flex;flex-direction:column;align-items:center;gap:2px;
+    flex-shrink:0;
+  }
+  .pill-icon{ font-size:1rem;line-height:1; }
+  .pill-lbl{ font-size:.55rem;font-weight:700;line-height:1;color:inherit; }
+  .pill.on-dark{background:#111;color:#fff;border-color:#111;}
+  .pill.on-blue{background:var(--blue);color:#fff;border-color:var(--blue);}
+  /* row of pills */
+  .pill-row{ display:flex;gap:4px;width:100%;justify-content:center; }
 
   /* ── CANVAS WRAPPER ── */
   .canvas-wrapper{
     background:var(--surface);border-radius:var(--radius);
-    box-shadow:var(--shadow);border:1px solid var(--border);padding:10px;
+    box-shadow:var(--shadow);border:1px solid var(--border);
+    padding:10px;
+    width:var(--canvas-size);
+    box-sizing:border-box;
   }
   .canvas-top-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
   .undo-btn{
@@ -44,75 +138,25 @@
     font-family:inherit;font-size:.85rem;font-weight:700;
   }
 
-  /* Canvas stack — all three layers share the same grid cell */
+  /* Canvas stack fills column exactly */
   .canvas-stack{
-    display:grid;
-    grid-template-columns:1fr;
-    grid-template-rows:auto;
-    border-radius:8px;
-    border:1.5px solid var(--border);
-    overflow:hidden;
-    /* CRITICAL for mobile: prevent any touch from scrolling the page */
-    touch-action:none;
+    display:grid;grid-template-columns:1fr;grid-template-rows:auto;
+    border-radius:8px;border:1.5px solid var(--border);
+    overflow:hidden;touch-action:none;
   }
   .canvas-stack>*{ grid-area:1/1; }
+  #mainCanvas{display:block;width:100%;height:auto;z-index:1;background:#fff;}
+  #overlayContainer{z-index:2;pointer-events:none;position:relative;}
+  #topCanvas{display:block;width:100%;height:auto;z-index:3;pointer-events:all;}
 
-  #mainCanvas{
-    display:block;width:100%;height:auto;
-    z-index:1; background:#fff;
-  }
-  #overlayContainer{
-    z-index:2;
-    pointer-events:none;
-    /* position relative so absolutely-placed children work */
-    position:relative;
-    /* must be same size as canvas — handled by JS */
-  }
-  #topCanvas{
-    display:block;width:100%;height:auto;
-    z-index:3;
-    /* pointer-events set to 'all' by JS after init */
-    pointer-events:all;
-  }
-
-  /* ── DRAW CONTROLS ── */
-  .draw-controls{
-    background:var(--surface);border-radius:var(--radius);
-    box-shadow:var(--shadow);border:1px solid var(--border);
-    padding:12px 14px;display:flex;flex-direction:column;gap:9px;
-  }
-  .colors{display:flex;gap:7px;flex-wrap:wrap;}
-  .color-swatch{
-    width:26px;height:26px;border-radius:50%;cursor:pointer;
-    border:3px solid transparent;flex-shrink:0;
-    transition:transform .1s,border-color .1s;
-  }
-  .color-swatch.active{border-color:#111;transform:scale(1.18);}
-  .ctrl-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
-  .ctrl-label{font-size:.74rem;font-weight:700;color:var(--muted);flex-shrink:0;}
-  #sizeSlider{
-    -webkit-appearance:none;height:5px;border-radius:5px;
-    background:var(--border);outline:none;width:80px;flex-shrink:0;
-  }
-  #sizeSlider::-webkit-slider-thumb{
-    -webkit-appearance:none;width:16px;height:16px;
-    border-radius:50%;background:#111;cursor:pointer;
-  }
-  .pill{
-    padding:5px 12px;border-radius:50px;border:1.5px solid var(--border);
-    background:transparent;font-family:inherit;font-size:.76rem;
-    font-weight:700;cursor:pointer;color:var(--muted);
-    white-space:nowrap;transition:all .1s;
-  }
-  .pill.on-dark{background:#111;color:#fff;border-color:#111;}
-  .pill.on-blue{background:var(--blue);color:#fff;border-color:var(--blue);}
-
-  /* ── RIGHT PANEL ── */
+  /* ── RIGHT PANEL — fixed 280px, same height as canvas ── */
   .right-panel{
+    width:280px;flex-shrink:0;
     background:var(--surface);border-radius:var(--radius);
     box-shadow:var(--shadow);border:1px solid var(--border);
     padding:12px;display:flex;flex-direction:column;gap:6px;
-    max-height:85vh;overflow-y:auto;
+    height:var(--canvas-size);
+    overflow-y:auto;
   }
   .right-panel::-webkit-scrollbar{width:3px;}
   .right-panel::-webkit-scrollbar-thumb{background:#ddd;border-radius:10px;}
@@ -260,22 +304,105 @@
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
   @media(max-width:700px){
-    .layout{grid-template-columns:1fr;}
-    .right-panel{max-height:none;}
-    .colors{gap:6px;}
-    .color-swatch{width:28px;height:28px;}
+    /* Single column, stacked: header → canvas → draw controls → right panel */
+    .layout{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .canvas-header{
+      order:1;
+      margin-bottom:0;
+    }
+    .canvas-col{
+      order:2;
+    }
+    .canvas-col .canvas-wrapper{
+      max-width:100%;
+    }
+    .draw-controls{
+      order:3;
+      /* Switch to horizontal wrap layout */
+      flex-direction:row;
+      flex-wrap:wrap;
+      width:100%;
+      height:auto;
+      align-items:flex-start;
+      gap:8px;
+    }
+    .colors{
+      grid-template-columns:repeat(7,1fr);
+      width:100%;
+    }
+    .ctrl-divider{
+      width:100%;
+      height:1px;
+    }
+    .ctrl-row{
+      flex-direction:row;
+      flex-wrap:wrap;
+      align-items:center;
+      width:100%;
+    }
+    .pill-row{ justify-content:flex-start; }
+    #sizeSlider{ width:120px; }
+    .right-panel{
+      order:4;
+      max-height:none;
+    }
+    .color-swatch{width:26px;height:26px;}
   }
 </style>
 </head>
 <body>
 
-<header>
-  <h1>Expression Palette</h1>
-  <p>Based on what you learned about your emotions and the skills to manage them, now try updating your initial image to show how you are feeling now.</p>
-</header>
-
 <div class="layout">
-  <div class="left-panel">
+  <!-- Canvas column header (col 2, row 1) — always aligned with canvas -->
+  <div class="canvas-header">
+    <h1>Expression Palette</h1>
+    <p>Based on what you learned about your emotions and the skills to manage them,<br>now try updating your initial image to show how you are feeling now.</p>
+  </div>
+  <!-- Column 1: Draw controls -->
+  <div class="draw-controls">
+    <div class="colors" id="colorPalette"></div>
+    <div class="ctrl-divider"></div>
+    <div class="ctrl-row">
+      <span class="ctrl-label">Size</span>
+      <input type="range" id="sizeSlider" min="2" max="44" value="8">
+    </div>
+    <div class="ctrl-divider"></div>
+    <div class="ctrl-row">
+      <span class="ctrl-label">Tool</span>
+      <div class="pill-row">
+        <button class="pill on-dark" id="btnBrush"  onclick="setTool('brush')"  title="Brush">
+          <span class="pill-icon">🖌</span><span class="pill-lbl">Brush</span>
+        </button>
+        <button class="pill"         id="btnEraser" onclick="setTool('eraser')" title="Eraser">
+          <span class="pill-icon">⬜</span><span class="pill-lbl">Eraser</span>
+        </button>
+      </div>
+    </div>
+    <div class="ctrl-divider"></div>
+    <div class="ctrl-row">
+      <span class="ctrl-label">Style</span>
+      <div class="pill-row">
+        <button class="pill on-blue" id="bsNormal" onclick="setBrush('normal')" title="Basic">
+          <span class="pill-icon">🖌</span><span class="pill-lbl">Basic</span>
+        </button>
+        <button class="pill"         id="bsWater"  onclick="setBrush('water')"  title="Watercolor">
+          <span class="pill-icon">💧</span><span class="pill-lbl">Water</span>
+        </button>
+      </div>
+      <div class="pill-row">
+        <button class="pill"         id="bsSpray"  onclick="setBrush('spray')"  title="Spray">
+          <span class="pill-icon">✦</span><span class="pill-lbl">Spray</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Column 2: Canvas -->
+  <div class="canvas-col">
     <div class="canvas-wrapper">
       <div class="canvas-top-bar">
         <button class="undo-btn" onclick="undo()">↩ Undo</button>
@@ -285,22 +412,6 @@
         <canvas id="mainCanvas" width="700" height="700"></canvas>
         <div id="overlayContainer"></div>
         <canvas id="topCanvas" width="700" height="700"></canvas>
-      </div>
-    </div>
-
-    <div class="draw-controls">
-      <div class="colors" id="colorPalette"></div>
-      <div class="ctrl-row">
-        <span class="ctrl-label">Size</span>
-        <input type="range" id="sizeSlider" min="2" max="44" value="8">
-        <button class="pill on-dark" id="btnBrush"  onclick="setTool('brush')">🖌 Brush</button>
-        <button class="pill"         id="btnEraser" onclick="setTool('eraser')">⬜ Eraser</button>
-      </div>
-      <div class="ctrl-row">
-        <span class="ctrl-label">Style</span>
-        <button class="pill on-blue" id="bsNormal" onclick="setBrush('normal')">🖌 Normal</button>
-        <button class="pill"         id="bsWater"  onclick="setBrush('water')">💧 Watercolor</button>
-        <button class="pill"         id="bsSpray"  onclick="setBrush('spray')">✦ Spray</button>
       </div>
     </div>
   </div>
@@ -446,8 +557,10 @@ var MEMES = [
   { url:'https://i.giphy.com/media/CWeaJzFCcHrDF1Iaju/giphy.webp',  label:'Nope' },
   { url:'https://i.giphy.com/media/xDoNbo6EFD3JS/giphy.webp',       label:'Cry' },
   { url:'https://i.giphy.com/media/7SF5scGB2AFrgsXP63/giphy.webp',  label:'Wow' },
-  { url:'https://i.giphy.com/media/Ev477g37MJORyOWfdG/giphy.webp',  label:'Shocked' },
-  { url:'https://i.giphy.com/media/6Umkh0GwRYhfG/giphy.webp',       label:'Really?' }
+  { url:'https://i.giphy.com/media/SqmkZ5IdwzTP2/giphy.webp',         label:'Seriously' },
+  { url:'https://i.giphy.com/media/PGOHXhxaT3gqnixfFL/giphy.webp',   label:'No way' },
+  { url:'https://i.giphy.com/media/Ev477g37MJORyOWfdG/giphy.webp',   label:'Shocked' },
+  { url:'https://i.giphy.com/media/6Umkh0GwRYhfG/giphy.webp',        label:'Really?' }
 ];
 
 function buildMemes(){
@@ -613,8 +726,9 @@ document.getElementById('sizeSlider').oninput=function(e){brushSize=+e.target.va
 
 function setTool(t){
   tool=t;
-  document.getElementById('btnBrush').className='pill'+(t==='brush'?' on-dark':'');
-  document.getElementById('btnEraser').className='pill'+(t==='eraser'?' on-dark':'');
+  var b=document.getElementById('btnBrush'), e=document.getElementById('btnEraser');
+  b.className='pill'+(t==='brush'?' on-dark':'');
+  e.className='pill'+(t==='eraser'?' on-dark':'');
 }
 var BIDS={normal:'bsNormal',water:'bsWater',spray:'bsSpray'};
 function setBrush(s){
