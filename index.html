@@ -377,7 +377,9 @@
       border-radius:0;
       border-left:none;
       border-right:none;
+      border-bottom:none;
       padding:12px 14px;
+      width:100vw;
     }
     .color-swatch{width:26px;height:26px;}
   }
@@ -1059,6 +1061,11 @@ function addOverlay(type,content){
     setTimeout(function(){ openTextEdit(el); },50);
   } else {
     showToast('Click to select · drag · ⤡ resize · ↻ rotate');
+    // On mobile, scroll back to canvas so user can see the sticker
+    if(window.innerWidth<=700){
+      var canvasEl=document.getElementById('canvasStack');
+      if(canvasEl) canvasEl.scrollIntoView({behavior:'smooth', block:'start'});
+    }
   }
 }
 function addTextBlock(){ addOverlay('textblock','Your text...'); }
