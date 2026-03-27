@@ -101,17 +101,17 @@
     -webkit-appearance:none;width:14px;height:14px;
     border-radius:50%;background:#111;cursor:pointer;
   }
-  /* pill buttons — icon + label stacked */
+  /* pill buttons — icon + label stacked, 1:1 ratio */
   .pill{
-    padding:5px 4px 4px;border-radius:8px;border:1.5px solid var(--border);
+    padding:8px 4px 6px;border-radius:8px;border:1.5px solid var(--border);
     background:transparent;font-family:inherit;
     font-weight:700;cursor:pointer;color:var(--muted);
     transition:all .1s;
-    width:44px;
-    display:flex;flex-direction:column;align-items:center;gap:2px;
+    width:48px;height:48px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
     flex-shrink:0;
   }
-  .pill-icon{ font-size:1rem;line-height:1; }
+  .pill-icon{ font-size:1.1rem;line-height:1; }
   .pill-lbl{ font-size:.55rem;font-weight:700;line-height:1;color:inherit; }
   .pill.on-dark{background:#111;color:#fff;border-color:#111;}
   .pill.on-blue{background:var(--blue);color:#fff;border-color:var(--blue);}
@@ -304,6 +304,7 @@
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
   @media(max-width:700px){
+    body{ padding:0; }
     /* Single column, stacked: header → canvas → draw controls → right panel */
     .layout{
       display:flex;
@@ -313,22 +314,38 @@
     .canvas-header{
       order:1;
       margin-bottom:0;
+      padding:14px 14px 0;
     }
     .canvas-col{
       order:2;
     }
     .canvas-col .canvas-wrapper{
       max-width:100%;
+      border-radius:0;
+      border-left:none;
+      border-right:none;
+      padding:8px 0 0;
+    }
+    .canvas-top-bar{
+      padding:0 10px 8px;
+    }
+    .canvas-stack{
+      border-radius:0;
+      border-left:none;
+      border-right:none;
     }
     .draw-controls{
       order:3;
-      /* Switch to horizontal wrap layout */
       flex-direction:row;
       flex-wrap:wrap;
       width:100%;
       height:auto;
       align-items:flex-start;
       gap:8px;
+      border-radius:0;
+      border-left:none;
+      border-right:none;
+      padding:10px 14px;
     }
     .colors{
       grid-template-columns:repeat(7,1fr);
@@ -349,6 +366,10 @@
     .right-panel{
       order:4;
       max-height:none;
+      border-radius:0;
+      border-left:none;
+      border-right:none;
+      padding:12px 14px;
     }
     .color-swatch{width:26px;height:26px;}
   }
@@ -387,10 +408,10 @@
       <span class="ctrl-label">Style</span>
       <div class="pill-row">
         <button class="pill on-blue" id="bsNormal" onclick="setBrush('normal')" title="Basic">
-          <span class="pill-icon">🖌</span><span class="pill-lbl">Basic</span>
+          <span class="pill-icon">⬤</span><span class="pill-lbl">Basic</span>
         </button>
         <button class="pill"         id="bsWater"  onclick="setBrush('water')"  title="Watercolor">
-          <span class="pill-icon">💧</span><span class="pill-lbl">Water</span>
+          <span class="pill-icon">🫧</span><span class="pill-lbl">Water</span>
         </button>
       </div>
       <div class="pill-row">
