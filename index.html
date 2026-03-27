@@ -197,8 +197,18 @@
     padding:8px 13px;cursor:pointer;background:transparent;
     font-family:inherit;font-size:.85rem;font-weight:600;
     color:var(--muted);width:100%;
+    transition:border-color .15s, background .15s, color .15s;
+  }
+  .text-block-btn:active, .text-block-btn.tapped{
+    border-color:#38bdf8;background:#e0f6ff;color:#0284c7;
   }
   .t-icon{font-size:1rem;font-weight:900;color:#111;font-family:serif;}
+  .s-item:active, .s-item.tapped{
+    background:#e0f6ff;border-color:#38bdf8;transform:scale(1.1);
+  }
+  .meme-item:active, .meme-item.tapped{
+    border-color:#38bdf8;outline:2px solid #38bdf8;
+  }
 
   .search-wrap{display:flex;flex-direction:column;gap:4px;}
   .search-bar{
@@ -232,7 +242,7 @@
     pointer-events:all;
   }
   .overlay-item.selected{
-    outline:2px dashed var(--blue);
+    outline:3px solid #38bdf8;
     outline-offset:4px;border-radius:4px;
   }
   .handle{
@@ -594,6 +604,11 @@ var MEMES = [
   { url:'https://i.giphy.com/media/6Umkh0GwRYhfG/giphy.webp',        label:'Really?' }
 ];
 
+function flashTap(el){
+  el.classList.add('tapped');
+  setTimeout(function(){ el.classList.remove('tapped'); }, 400);
+}
+
 function buildMemes(){
   var grid = document.getElementById('memeGrid');
   MEMES.forEach(function(m, i){
@@ -620,8 +635,8 @@ function buildMemes(){
 
     div.appendChild(img);
 
-    div.addEventListener('click', function(){ addOverlay('gif', m.url); });
-    div.addEventListener('touchend', function(e){ e.preventDefault(); addOverlay('gif', m.url); }, {passive:false});
+    div.addEventListener('click', function(){ flashTap(div); addOverlay('gif', m.url); });
+    div.addEventListener('touchend', function(e){ e.preventDefault(); flashTap(div); addOverlay('gif', m.url); }, {passive:false});
     grid.appendChild(div);
   });
 }
@@ -635,21 +650,21 @@ function buildRows(){
       html+='<div class="s-item" data-idx="'+rowId+'-'+i+'">'+em+'</div>';
     });
     el.innerHTML=html;
-    // attach listeners via event delegation
     el.addEventListener('click', function(ev){
       var item=ev.target.closest('.s-item');
       if(!item) return;
+      flashTap(item);
       var idx=item.dataset.idx;
       var parts=idx.split('-');
       var key=parts.slice(0,-1).join('-');
       var i=parseInt(parts[parts.length-1]);
       addOverlay('emoji', EMOJI_DB[key][i]);
     });
-    // touch — use touchend to fire tap
     el.addEventListener('touchend', function(ev){
       ev.preventDefault();
       var item=ev.target.closest('.s-item');
       if(!item) return;
+      flashTap(item);
       var idx=item.dataset.idx;
       var parts=idx.split('-');
       var key=parts.slice(0,-1).join('-');
@@ -1061,14 +1076,25 @@ function addOverlay(type,content){
     setTimeout(function(){ openTextEdit(el); },50);
   } else {
     showToast('Click to select · drag · ⤡ resize · ↻ rotate');
-    // On mobile, scroll back to canvas so user can see the sticker
-    if(window.innerWidth<=700){
-      var canvasEl=document.getElementById('canvasStack');
-      if(canvasEl) canvasEl.scrollIntoView({behavior:'smooth', block:'start'});
-    }
+    scrollToCanvas();
   }
 }
-function addTextBlock(){ addOverlay('textblock','Your text...'); }
+function scrollToCanvas(){
+  if(window.innerWidth<=700){
+    setTimeout(function(){
+      var el=document.getElementById('canvasStack');
+      if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
+    }, 350); // small buffer so user sees the selection highlight first
+  }
+}
+
+function addTextBlock(){
+  // Flash the button
+  var btn=document.querySelector('.text-block-btn');
+  if(btn){ btn.classList.add('tapped'); setTimeout(function(){btn.classList.remove('tapped');},400); }
+  addOverlay('textblock','Your text...');
+  scrollToCanvas();
+}
 
 // ── Text editing ──
 function openTextEdit(item){
